@@ -185,10 +185,10 @@ async def manage():
         # Forward and scan don't require a connection so run them and exit
         if config.forward:
             await forward_command()
-            return
+            return 0
         elif config.command == Commands.scan_adapter:
             await scan()
-            return
+            return 0
         
         # Server and other commands do require a connection so set one up
         try:
@@ -209,12 +209,14 @@ async def manage():
             await run_tcp_server(client)
         else:
             await run_command(client)
+        return 0
     except OSError as e:
         print(e)
         return 1
     except Exception as e:
         print("\nSomething unexpected went wrong:")
         print(traceback.format_exc())
+        return 1
     finally:
         if client:
             print("\rDisconnecting\r", end="")

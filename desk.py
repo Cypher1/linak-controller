@@ -86,7 +86,7 @@ class Desk:
 
     @classmethod
     def log_state(cls, height) -> None:
-        config.data("{:4.0}f".format(height))
+        config.data("{:4.0f}".format(height))
         config.info("Height: {:4.0f}mm".format(height.human))
 
     @classmethod
