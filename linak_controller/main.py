@@ -190,7 +190,7 @@ async def forward_command():
     await session.close()
 
 
-async def main():
+async def manage():
     """Set up the async event loop and signal handlers"""
     try:
         client = None
@@ -217,6 +217,12 @@ async def main():
             await Desk.stop(client)
             await disconnect(client)
             print("Disconnected         ")
+
+
+async def main():
+    await manage()
+    while config.forever:
+        await manage()
 
 
 def init():

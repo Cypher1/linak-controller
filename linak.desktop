@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=Linak Desk Server
+Exec=linak-controller --server --forever
+Comment=Launch Linak Desk Controller Server
+Icon=linak.jpg
+Type=Application
+Terminal=false

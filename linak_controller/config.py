@@ -34,6 +34,7 @@ class Config:
     move_to: Optional[str] = None
     move_command_period: float = 0.4
     quiet: bool = False
+    forever: bool = False # Retry on failure.
 
     # Command
     command: Commands = None
@@ -131,6 +132,13 @@ class Config:
             dest="quiet",
             type=bool,
             help="Print raw values instead of human readable text",
+            default=False,
+        )
+        parser.add_argument(
+            "--forever",
+            dest="forever",
+            type=bool,
+            help="Retry on error",
             default=False,
         )
 
