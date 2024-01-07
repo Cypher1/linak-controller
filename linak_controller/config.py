@@ -33,7 +33,7 @@ class Config:
     forward: bool = False
     move_to: Optional[str] = None
     move_command_period: float = 0.4
-
+    quiet: bool = False
 
     # Command
     command: Commands = None
@@ -126,9 +126,15 @@ class Config:
             ),
             default=DEFAULT_CONFIG_PATH,
         )
+        parser.add_argument(
+            "--quiet",
+            dest="quiet",
+            type=bool,
+            help="Print raw values instead of human readable text",
+            default=False,
+        )
 
         # Command to run
-
         cmd = parser.add_mutually_exclusive_group()
         cmd.add_argument(
             "--watch",
@@ -205,5 +211,24 @@ class Config:
     def log(self, message, end="\n"):
         print(message, end=end)
 
+    def data(self, message, end="\n"):
+        # Skip logging data when not in quiet mode.
+        if not config.quiet:
+            return
+
+        print(message, end=end)
+
+    def info(self, message, end="\n"):
+        if self.quiet:
+            return
+        self.log(message, end)
+
+    def warn(self, message, end="\n"):
+        if self.quiet:
+            return
+        self.log(message, end)
+
+    def error(self, message, end="\n"):
+        self.log(message, end)
 
 config = Config()

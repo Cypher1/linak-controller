@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=Linak Desk Stand
+Exec=linak-controller --forward --move-to stand
+Comment=Set Linak Desk to stand
+Icon=linak.jpg
+Type=Application
+Terminal=false

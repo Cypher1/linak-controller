@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=Linak Desk Sit
+Exec=linak-controller --forward --move-to sit
+Comment=Set Linak Desk to sit
+Icon=linak.jpg
+Type=Application
+Terminal=false

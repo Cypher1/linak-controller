@@ -72,33 +72,33 @@ async def run_command(client: BleakClient):
     """Begin the action specified by command line arguments and config"""
     # Always print current height
     initial_height, _ = await Desk.get_height_speed(client)
-    config.log("Height: {:4.0f}mm".format(initial_height.human))
+    Desk.log_state(initial_height)
     target = None
     if config.command == Commands.watch:
         # Print changes to height data
-        config.log("Watching for changes to desk height and speed")
+        config.info("Watching for changes to desk height and speed")
         await Desk.watch_height_speed(client)
     elif config.command == Commands.move_to:
         # Move to custom height
         if config.move_to in config.favourites:
             target = Height(config.favourites.get(config.move_to), True)
-            config.log(
+            config.info(
                 f"Moving to favourite height: {config.move_to} ({target.human} mm)"
             )
         elif str(config.move_to).isnumeric():
             target = Height(int(config.move_to), True)
-            config.log(f"Moving to height: {config.move_to}")
+            config.info(f"Moving to height: {config.move_to}")
         else:
-            config.log(f"Not a valid height or favourite position: {config.move_to}")
+            config.error(f"Not a valid height or favourite position: {config.move_to}")
             return
         if target.value == initial_height.value:
-            config.log(f"Nothing to do - already at specified height")
+            config.warn(f"Nothing to do - already at specified height")
             return
         await Desk.move_to(client, target)
     if target:
         final_height, _ = await Desk.get_height_speed(client)
         # If we were moving to a target height, wait, then print the actual final height
-        config.log(
+        config.info(
             "Final height: {:4.0f}mm (Target: {:4.0f}mm)".format(
                 final_height.human, target.human
             )
@@ -131,8 +131,7 @@ async def run_tcp_forwarded_command(client, reader, writer):
 async def run_server(client: BleakClient):
     """Start a server to listen for commands via websocket connection"""
     app = web.Application()
-    app.router.add_post("/", partial(run_forwarded_command, client))
-    app.router.add_get("/ws", partial(run_forwarded_ws_command, client))
+    app.router.add_get("/", partial(run_forwarded_command, client))
     runner = web.AppRunner(app)
     await runner.setup()
     site = web.TCPSite(runner, config.server_address, config.server_port)
@@ -144,19 +143,6 @@ async def run_server(client: BleakClient):
 async def run_forwarded_command(client: BleakClient, request):
     """Run commands received by the server"""
     print("Received command")
-
-    forwarded_config = await request.json()
-    for key in forwarded_config:
-        setattr(config, key, forwarded_config[key])
-    await run_command(client)
-    return web.Response(text="OK")
-
-async def run_forwarded_ws_command(client: BleakClient, request):
-    """
-    Run commands received by the server via websocket connection
-    This allows live streaming of the logs back to the client
-    """
-    print("Received ws command")
     ws = web.WebSocketResponse()
 
     def log(message, end="\n"):
@@ -191,7 +177,7 @@ async def forward_command():
     }
     session = aiohttp.ClientSession()
     ws = await session.ws_connect(
-        f"http://{config.server_address}:{config.server_port}/ws"
+        f"http://{config.server_address}:{config.server_port}"
     )
     await ws.send_str(json.dumps(forwarded_config))
     while True:
