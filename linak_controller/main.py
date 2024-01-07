@@ -34,33 +34,19 @@ def disconnect_callback(client, _=None):
 
 async def connect(client=None, attempt=0):
     """Attempt to connect to the desk"""
-    try:
-        print("Connecting\r", end="")
-        if not client:
-            client = BleakClient(
-                config.mac_address,
-                device=config.adapter_name,
-                disconnected_callback=disconnect_callback,
-            )
-        await client.connect(timeout=config.connection_timeout)
-        print("Connected {}".format(config.mac_address))
+    print("Connecting\r", end="")
+    if not client:
+        client = BleakClient(
+            config.mac_address,
+            device=config.adapter_name,
+            disconnected_callback=disconnect_callback,
+        )
+    await client.connect(timeout=config.connection_timeout)
+    print("Connected {}".format(config.mac_address))
 
-        await Desk.initialise(client)
+    await Desk.initialise(client)
 
-        return client
-    except BleakError as e:
-        print("Connecting failed")
-        if "was not found" in str(e):
-            print(e)
-        else:
-            print(traceback.format_exc())
-        os._exit(1)
-    except asyncio.exceptions.TimeoutError as e:
-        print("Connecting failed - timed out")
-        os._exit(1)
-    except OSError as e:
-        print(e)
-        os._exit(1)
+    return client
 
 
 async def disconnect(client):
@@ -199,17 +185,33 @@ async def manage():
         # Forward and scan don't require a connection so run them and exit
         if config.forward:
             await forward_command()
+            return
         elif config.command == Commands.scan_adapter:
             await scan()
-        else:
-            # Server and other commands do require a connection so set one up
+            return
+        
+        # Server and other commands do require a connection so set one up
+        try:
             client = await connect()
-            if config.command == Commands.server:
-                await run_server(client)
-            elif config.command == Commands.tcp_server:
-                await run_tcp_server(client)
+        except BleakError as e:
+            print("Connecting failed")
+            if "was not found" in str(e):
+                print(e)
             else:
-                await run_command(client)
+                print(traceback.format_exc())
+            return 1
+        except asyncio.exceptions.TimeoutError as e:
+            print("Connecting failed - timed out")
+            return 1
+        if config.command == Commands.server:
+            await run_server(client)
+        elif config.command == Commands.tcp_server:
+            await run_tcp_server(client)
+        else:
+            await run_command(client)
+    except OSError as e:
+        print(e)
+        return 1
     except Exception as e:
         print("\nSomething unexpected went wrong:")
         print(traceback.format_exc())
@@ -222,9 +224,10 @@ async def manage():
 
 
 async def main():
-    await manage()
+    return_code = await manage()
     while config.forever:
-        await manage()
+        return_code = await manage()
+    os._exit(return_code)
 
 
 def init():
