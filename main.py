@@ -11,6 +11,8 @@ from .config import config, Commands
 from .util import Height
 from .desk import Desk
 
+ALLOWED_KEYS = ["command", "move_to", "quiet"]
+ALLOWED_COMMANDS = [None, Commands.move_to, Commands.watch]
 
 async def scan():
     """Scan for a bluetooth device with the configured address and return it or return all devices if no address specified"""
@@ -166,14 +168,14 @@ async def run_forwarded_command(client: BleakClient, request):
 
 async def forward_command():
     """Send commands to a server instance of this script"""
-    allowed_commands = [None, Commands.move_to, Commands.watch]
-    if config.command not in allowed_commands:
-        print(f"Command must be one of {allowed_commands}")
+    # TODO: Check these server side.
+    if config.command not in ALLOWED_COMMANDS:
+        print(f"Command must be one of {ALLOWED_COMMANDS}")
         return
     config_dict = config.__dict__
-    allowed_keys = ["command", "move_to"]
+    # TODO: Check these server side.
     forwarded_config = {
-        key: config_dict[key] for key in allowed_keys if key in config_dict
+        key: config_dict[key] for key in ALLOWED_KEYS if key in config_dict
     }
     session = aiohttp.ClientSession()
     ws = await session.ws_connect(
