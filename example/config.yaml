@@ -1,0 +1,9 @@
+mac_address: AA:AA:AA:AA:AA:AA
+scan_timeout: 5
+connection_timeout: 10
+adapter_name: hci0
+server_address: "127.0.0.1"
+server_port: 9123
+favourites:
+  sit: 683
+  stand: 1040

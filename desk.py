@@ -67,7 +67,7 @@ class Desk:
             height, speed = await ReferenceOutputService.get_height_speed(client)
             if speed.value == 0:
                 break
-            cls.log_update(height, speed)
+            self.log_update(height, speed)
 
     @classmethod
     async def get_height_speed(cls, client: BleakClient) -> Tuple[Height, Speed]:
@@ -79,18 +79,16 @@ class Desk:
 
         def callback(sender, data):
             height, speed = ReferenceOutputService.decode_height_speed(data)
-            cls.log_update(height, speed)
+            self.log_update(height, speed)
 
         await ReferenceOutputService.ONE.subscribe(client, callback)
         await asyncio.Future()
 
-    @classmethod
-    def log_state(cls, height) -> None:
+    def log_state(self, height) -> None:
         config.data("{:4.0}f", height)
         config.info("Height: {:4.0f}mm".format(height.human))
 
-    @classmethod
-    def log_update(cls, height, speed) -> None:
+    def log_update(self, height, speed) -> None:
         config.data("{:4.0f} {:2.0f}", height, speed)
         config.info(
             "Height: {:4.0f}mm Speed: {:2.0f}mm/s".format(height.human, speed.human)
