@@ -228,6 +228,7 @@ async def manage():
 async def main():
     return_code = await manage()
     while config.forever:
+        await asyncio.sleep(0.5)  # Sleep a little to let the computer rest
         return_code = await manage()
     os._exit(return_code)
 
