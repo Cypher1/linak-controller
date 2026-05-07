@@ -5,7 +5,6 @@ High level helper class to organise methods for performing actions with a Linak 
 import asyncio
 from bleak import BleakClient
 from bleak.exc import BleakDBusError
-from typing import Tuple
 from .gatt import (
     DPGService,
     ControlService,
@@ -70,7 +69,7 @@ class Desk:
             cls.log_update(height, speed)
 
     @classmethod
-    async def get_height_speed(cls, client: BleakClient) -> Tuple[Height, Speed]:
+    async def get_height_speed(cls, client: BleakClient) -> tuple[Height, Speed]:
         return await ReferenceOutputService.get_height_speed(client)
 
     @classmethod
@@ -85,13 +84,15 @@ class Desk:
         await asyncio.Future()
 
     @classmethod
-    def log_state(cls, height) -> None:
-        config.data("{:4.0f}".format(height))
+    def log_state(cls, height: Height) -> None:
+        print(height.value)
+        print(height.human)
+        config.data("{:4.0f}".format(height.value))
         config.info("Height: {:4.0f}mm".format(height.human))
 
     @classmethod
-    def log_update(cls, height, speed) -> None:
-        config.data("{:4.0f} {:2.0f}".format(height, speed))
+    def log_update(cls, height: Height, speed: Speed) -> None:
+        config.data("{:4.0f} {:2.0f}".format(height.value, speed.value))
         config.info(
             "Height: {:4.0f}mm Speed: {:2.0f}mm/s".format(height.human, speed.human)
         )
@@ -102,7 +103,7 @@ class Desk:
             await ControlService.COMMAND.write_command(
                 client, ControlService.COMMAND.CMD_STOP
             )
-        except BleakDBusError as e:
+        except BleakDBusError:
             # Harmless exception that happens on Raspberry Pis
             # bleak.exc.BleakDBusError: [org.bluez.Error.NotPermitted] Write acquired
             pass
@@ -112,7 +113,7 @@ class Desk:
         if len(caps) < 2:
             return {}
         capByte = caps[0]
-        refByte = caps[1]
+        _refByte = caps[1]
         return {
             "memSize": capByte & 7,
             "autoUp": (capByte & 8) != 0,

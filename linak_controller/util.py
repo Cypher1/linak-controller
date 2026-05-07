@@ -47,14 +47,16 @@ class Height:
 
     @classmethod
     def height_to_internal_height(cls, height: int):
+        assert config.base_height is not None
         return (height - config.base_height) * 10
 
     @classmethod
     def internal_height_to_height(cls, height: int):
+        assert config.base_height is not None
         return (height / 10) + config.base_height
 
     @property
-    def human(self) -> int:
+    def human(self) -> float:
         return self.internal_height_to_height(self.value)
 
 
@@ -76,5 +78,5 @@ class Speed:
         return speed / 100
 
     @property
-    def human(self) -> int:
+    def human(self) -> float:
         return self.internal_speed_to_speed(self.value)

@@ -4,7 +4,9 @@ import traceback
 import asyncio
 import aiohttp
 from aiohttp import web
-from bleak import BleakClient, BleakError, BleakScanner
+from bleak import BleakClient, BleakScanner
+from bleak.backends.device import BLEDevice
+from bleak.exc import BleakError
 import json
 from functools import partial
 from .config import config, Commands
@@ -14,7 +16,7 @@ from .desk import Desk
 ALLOWED_KEYS = ["command", "move_to", "quiet"]
 ALLOWED_COMMANDS = [None, Commands.move_to, Commands.watch]
 
-async def scan():
+async def scan() -> list[BLEDevice]:
     """Scan for a bluetooth device with the configured address and return it or return all devices if no address specified"""
     print("Scanning\r", end="")
     devices = await BleakScanner().discover(
@@ -26,16 +28,17 @@ async def scan():
     return devices
 
 
-def disconnect_callback(client, _=None):
+def disconnect_callback(client: BleakClient, _=None):
     if not config.disconnecting:
         print("Lost connection with {}".format(client.address))
         asyncio.create_task(connect(client))
 
 
-async def connect(client=None, attempt=0):
+async def connect(client=None, attempt=0) -> BleakClient:
     """Attempt to connect to the desk"""
     print("Connecting\r", end="")
     if not client:
+        assert config.mac_address is not None
         client = BleakClient(
             config.mac_address,
             device=config.adapter_name,
@@ -49,7 +52,7 @@ async def connect(client=None, attempt=0):
     return client
 
 
-async def disconnect(client):
+async def disconnect(client: BleakClient):
     """Attempt to disconnect cleanly"""
     if client.is_connected:
         config.disconnecting = True
@@ -69,18 +72,21 @@ async def run_command(client: BleakClient):
     elif config.command == Commands.move_to:
         # Move to custom height
         if config.move_to in config.favourites:
-            target = Height(config.favourites.get(config.move_to), True)
+            target_height = config.favourites.get(config.move_to)
+            assert target_height is not None
+            target = Height(target_height, True)
             config.info(
                 f"Moving to favourite height: {config.move_to} ({target.human} mm)"
             )
         elif str(config.move_to).isnumeric():
+            assert isinstance(config.move_to, int)
             target = Height(int(config.move_to), True)
             config.info(f"Moving to height: {config.move_to}")
         else:
             config.error(f"Not a valid height or favourite position: {config.move_to}")
             return
         if target.value == initial_height.value:
-            config.warn(f"Nothing to do - already at specified height")
+            config.warn("Nothing to do - already at specified height")
             return
         await Desk.move_to(client, target)
     if target:
@@ -189,7 +195,7 @@ async def manage():
         elif config.command == Commands.scan_adapter:
             await scan()
             return 0
-        
+
         # Server and other commands do require a connection so set one up
         try:
             client = await connect()

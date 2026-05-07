@@ -37,7 +37,7 @@ class Config:
     forever: bool = False # Retry on failure.
 
     # Command
-    command: Commands = None
+    command: Commands = Commands.watch  # Set default to watch.
 
     # State
     disconnecting: bool = False
@@ -192,7 +192,7 @@ class Config:
             with open(config_file_path, "r") as stream:
                 try:
                     config_file = yaml.safe_load(stream)
-                except yaml.YAMLError as exc:
+                except yaml.YAMLError:
                     print("Reading config.yaml failed")
                     exit(1)
         else:
@@ -205,7 +205,7 @@ class Config:
         for key in args:
             setattr(self, key, args[key])
 
-        if not self.mac_address:
+        if self.mac_address is None:
             parser.error("Mac address must be provided")
 
         self.mac_address = self.mac_address.upper()
